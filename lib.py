@@ -1,0 +1,135 @@
+from esipy import App, EsiClient, EsiSecurity
+
+
+scopes: list = [
+    'esi-calendar.respond_calendar_events.v1',
+    'esi-calendar.read_calendar_events.v1',
+    'esi-location.read_location.v1',
+    'esi-location.read_ship_type.v1',
+    'esi-mail.organize_mail.v1',
+    'esi-mail.read_mail.v1',
+    'esi-mail.send_mail.v1',
+    'esi-skills.read_skills.v1',
+    'esi-skills.read_skillqueue.v1',
+    'esi-wallet.read_character_wallet.v1',
+    'esi-wallet.read_corporation_wallet.v1',
+    'esi-search.search_structures.v1',
+    'esi-clones.read_clones.v1',
+    'esi-characters.read_contacts.v1',
+    'esi-universe.read_structures.v1',
+    'esi-bookmarks.read_character_bookmarks.v1',
+    'esi-killmails.read_killmails.v1',
+    'esi-corporations.read_corporation_membership.v1',
+    'esi-assets.read_assets.v1',
+    'esi-planets.manage_planets.v1',
+    'esi-fleets.read_fleet.v1',
+    'esi-fleets.write_fleet.v1',
+    'esi-ui.open_window.v1',
+    'esi-ui.write_waypoint.v1',
+    'esi-characters.write_contacts.v1',
+    'esi-fittings.read_fittings.v1',
+    'esi-fittings.write_fittings.v1',
+    'esi-markets.structure_markets.v1',
+    'esi-corporations.read_structures.v1',
+    'esi-corporations.write_structures.v1',
+    'esi-characters.read_loyalty.v1',
+    'esi-characters.read_opportunities.v1',
+    'esi-characters.read_chat_channels.v1',
+    'esi-characters.read_medals.v1',
+    'esi-characters.read_standings.v1',
+    'esi-characters.read_agents_research.v1',
+    'esi-industry.read_character_jobs.v1',
+    'esi-markets.read_character_orders.v1',
+    'esi-characters.read_blueprints.v1',
+    'esi-characters.read_corporation_roles.v1',
+    'esi-location.read_online.v1',
+    'esi-contracts.read_character_contracts.v1',
+    'esi-clones.read_implants.v1',
+    'esi-characters.read_fatigue.v1',
+    'esi-killmails.read_corporation_killmails.v1',
+    'esi-corporations.track_members.v1',
+    'esi-wallet.read_corporation_wallets.v1',
+    'esi-characters.read_notifications.v1',
+    'esi-corporations.read_divisions.v1',
+    'esi-corporations.read_contacts.v1',
+    'esi-assets.read_corporation_assets.v1',
+    'esi-corporations.read_titles.v1',
+    'esi-corporations.read_blueprints.v1',
+    'esi-bookmarks.read_corporation_bookmarks.v1',
+    'esi-contracts.read_corporation_contracts.v1',
+    'esi-corporations.read_standings.v1',
+    'esi-corporations.read_starbases.v1',
+    'esi-industry.read_corporation_jobs.v1',
+    'esi-markets.read_corporation_orders.v1',
+    'esi-corporations.read_container_logs.v1',
+    'esi-industry.read_character_mining.v1',
+    'esi-industry.read_corporation_mining.v1',
+    'esi-planets.read_customs_offices.v1',
+    'esi-corporations.read_facilities.v1',
+    'esi-corporations.read_medals.v1',
+    'esi-characters.read_titles.v1',
+    'esi-alliances.read_contacts.v1',
+    'esi-characters.read_fw_stats.v1',
+    'esi-corporations.read_fw_stats.v1',
+    'esi-corporations.read_outposts.v1',
+    'esi-characterstats.read.v1'
+]
+
+
+class CharacterExplorer:
+    """CharacterExplorer class.
+
+    Things this class allows access to:
+        - Assets (name, quantity, location)
+        - Character (id, name, ...)
+        - Contacts ?
+        - Mail ?
+        - Wallet (balance)
+    """
+
+    def __init__(self, client_id: str, secret_key: str, redirect_url: str, refresh_token: str) -> None:
+        self.client_id = client_id
+        self.secret_key = secret_key
+        self.redirect_url = redirect_url
+        self.refresh_token = refresh_token
+        self.data = {}
+        self._setup_esi()
+
+    def _setup_esi(self) -> None:
+        headers = {'User-Agent': 'EVE Character explorer | celeodor@gmail.com'}
+        self.app = App.create('https://esi.tech.ccp.is/latest/swagger.json?datasource=tranquility')
+        self.security = EsiSecurity(
+            app=self.app,
+            client_id='4b9a2e13b78749808d1029375fdd992c',
+            secret_key='J00TUc3wEePRjMGZoPCkp7474yQGh3TvKcTQn7gx',
+            redirect_uri='http://localhost:5000/eve/callback',
+            headers=headers
+        )
+        self.client = EsiClient(
+            security=self.security,
+            headers=headers
+        )
+        self.security.update_token({
+            'access_token': '',
+            'expires_in': -1,
+            'refresh_token': self.refresh_token
+        })
+        self.security.refresh()
+        self.data['verify'] = self.security.verify()
+
+    def get_character_name(self) -> str:
+        return self.data['verify']['CharacterName']
+
+    def get_character_id(self) -> int:
+        return self.data['verify']['CharacterID']
+
+    def get_assets(self) -> list:
+        if 'assets' in self.data:
+            return self.data['assets']
+        op = self.app.op['get_characters_character_id_assets'](
+            character_id=91316135
+        )
+        data = self.client.request(op)
+        # TODO add the name of the item from the SDE to the dict entry
+        self.data['assets'] = data
+        return data
