@@ -1,10 +1,176 @@
 import os
+import logging
 import sqlite3
 
 from esipy import App, EsiClient, EsiSecurity
 
 
-scopes: list = [
+class CharacterExplorer:
+    """CharacterExplorer class.
+
+    Things this class allows access to:
+        - Assets (name, quantity, location)
+        - Character (id, name, ...)
+        - Contacts ?
+        - Mail ?
+        - Wallet (balance)
+    """
+
+    def __init__(self, client_id: str, secret_key: str, redirect_url: str, refresh_token: str, sde_path: str = None) -> None:
+        """Init method.
+
+        Args:
+            client_id: EVE developer app client id
+            secret_key: EVE developer app secret key
+            redirect_url: EVE developer app redirect URL
+            refresh_token: the character's refresh token, fetched from whichever
+                           library you're using to perform SSO
+            sde_path: optional, path to the SDE sqlite file
+
+        Returns:
+            None
+        """
+        self.client_id = client_id
+        self.secret_key = secret_key
+        self.redirect_url = redirect_url
+        self.refresh_token = refresh_token
+        self.sde_path = sde_path or 'sqlite-latest.sqlite'
+        self.data: dict = {}
+        self._setup_logging()
+        self._verify_sde()
+        self._setup_esi()
+
+    def _setup_logging(self) -> None:
+        """Sets up the logging controls.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        self.logging = logging.getLogger(__name__)
+        self.logging.addHandler(logging.NullHandler())
+
+    def _verify_sde(self) -> None:
+        """Asserts that the SDE file exists at the correct path.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        assert os.path.exists(self.sde_path)
+        logging.debug(f'SDE at path {self.sde_path} exists')
+
+    def _setup_esi(self) -> None:
+        """Sets up the ESI connection library.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        logging.debug('Setting up EsiPy objects')
+        headers = {'User-Agent': 'EVE Character explorer | celeodor@gmail.com'}
+        self.app = App.create('https://esi.tech.ccp.is/latest/swagger.json?datasource=tranquility')
+        self.security = EsiSecurity(
+            app=self.app,
+            client_id='4b9a2e13b78749808d1029375fdd992c',
+            secret_key='J00TUc3wEePRjMGZoPCkp7474yQGh3TvKcTQn7gx',
+            redirect_uri='http://localhost:5000/eve/callback',
+            headers=headers
+        )
+        self.client = EsiClient(
+            security=self.security,
+            headers=headers
+        )
+        self.security.update_token({
+            'access_token': '',
+            'expires_in': -1,
+            'refresh_token': self.refresh_token
+        })
+        logging.debug('Getting access token from refresh token')
+        self.security.refresh()
+        logging.debug('Getting character verify information')
+        self.data['verify'] = self.security.verify()
+
+    def _do_sde_query(self, query, *args) -> list:
+        """Runs a query against the SDE data.
+
+        Args:
+            query: SQL query
+            args: data to pass in with the query
+
+        Returns:
+            query data
+        """
+        logging.debug(f'Running SDE query {query}')
+        connection = sqlite3.connect(self.sde_path)
+        cursor = connection.cursor()
+        cursor.execute(query, *args)
+        data = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        return data
+
+    def get_character_name(self) -> str:
+        """Returns the character's name
+
+        Args:
+            None
+
+        Returns:
+            name
+        """
+        return self.data['verify']['CharacterName']
+
+    def get_character_id(self) -> int:
+        """Returns the character's id
+
+        Args:
+            None
+
+        Returns:
+            id
+        """
+        return self.data['verify']['CharacterID']
+
+    def get_assets(self) -> list:
+        """Returns the character's assets.
+
+        The returned list is the data from the 'get_characters_character_id_assets' ESI
+        endpoint with the item's names included in each entry from the SDE.
+
+        Args:
+            None
+
+        Returns:
+            list of assets
+        """
+        if 'assets' in self.data:
+            logging.info('Returning cached assets information')
+            return self.data['assets']
+        logging.info('Querying ESI for assets data')
+        op = self.app.op['get_characters_character_id_assets'](
+            character_id=91316135
+        )
+        data = self.client.request(op).data
+        ids = [item['type_id'] for item in data]
+        sde_data = self._do_sde_query('SELECT typeID, typeName from invTypes where typeID in ({})'.format(', '.join('?' for _ in ids)), ids)
+        logging.info('Cleaning up asset information')
+        item_lookups = {}
+        for pair in sde_data:
+            item_lookups[pair[0]] = pair[1]
+        for item in data:
+            item['type_name'] = item_lookups[item['type_id']]
+        self.data['assets'] = data
+        return data
+
+
+all_esi_scopes: list = [
     'esi-calendar.respond_calendar_events.v1',
     'esi-calendar.read_calendar_events.v1',
     'esi-location.read_location.v1',
@@ -77,147 +243,3 @@ scopes: list = [
     'esi-corporations.read_outposts.v1',
     'esi-characterstats.read.v1'
 ]
-
-
-class CharacterExplorer:
-    """CharacterExplorer class.
-
-    Things this class allows access to:
-        - Assets (name, quantity, location)
-        - Character (id, name, ...)
-        - Contacts ?
-        - Mail ?
-        - Wallet (balance)
-    """
-
-    def __init__(self, client_id: str, secret_key: str, redirect_url: str, refresh_token: str, sde_path: str = None) -> None:
-        """Init method.
-
-        Args:
-            client_id: EVE developer app client id
-            secret_key: EVE developer app secret key
-            redirect_url: EVE developer app redirect URL
-            refresh_token: the character's refresh token, fetched from whichever
-                           library you're using to perform SSO
-            sde_path: optional, path to the SDE sqlite file
-
-        Returns:
-            None
-        """
-        self.client_id = client_id
-        self.secret_key = secret_key
-        self.redirect_url = redirect_url
-        self.refresh_token = refresh_token
-        self.sde_path = sde_path or 'sqlite-latest.sqlite'
-        self.data: dict = {}
-        self._verify_sde()
-        self._setup_esi()
-
-    def _verify_sde(self) -> None:
-        """Asserts that the SDE file exists at the correct path.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        assert os.path.exists(self.sde_path)
-
-    def _setup_esi(self) -> None:
-        """Sets up the ESI connection library.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        headers = {'User-Agent': 'EVE Character explorer | celeodor@gmail.com'}
-        self.app = App.create('https://esi.tech.ccp.is/latest/swagger.json?datasource=tranquility')
-        self.security = EsiSecurity(
-            app=self.app,
-            client_id='4b9a2e13b78749808d1029375fdd992c',
-            secret_key='J00TUc3wEePRjMGZoPCkp7474yQGh3TvKcTQn7gx',
-            redirect_uri='http://localhost:5000/eve/callback',
-            headers=headers
-        )
-        self.client = EsiClient(
-            security=self.security,
-            headers=headers
-        )
-        self.security.update_token({
-            'access_token': '',
-            'expires_in': -1,
-            'refresh_token': self.refresh_token
-        })
-        self.security.refresh()
-        self.data['verify'] = self.security.verify()
-
-    def _do_sde_query(self, query, *args) -> list:
-        """Runs a query against the SDE data.
-
-        Args:
-            query: SQL query
-            args: data to pass in with the query
-
-        Returns:
-            query data
-        """
-        connection = sqlite3.connect(self.sde_path)
-        cursor = connection.cursor()
-        cursor.execute(query, *args)
-        data = cursor.fetchall()
-        cursor.close()
-        connection.close()
-        return data
-
-    def get_character_name(self) -> str:
-        """Returns the character's name
-
-        Args:
-            None
-
-        Returns:
-            name
-        """
-        return self.data['verify']['CharacterName']
-
-    def get_character_id(self) -> int:
-        """Returns the character's id
-
-        Args:
-            None
-
-        Returns:
-            id
-        """
-        return self.data['verify']['CharacterID']
-
-    def get_assets(self) -> list:
-        """Returns the character's assets.
-
-        The returned list is the data from the 'get_characters_character_id_assets' ESI
-        endpoint with the item's names included in each entry from the SDE.
-
-        Args:
-            None
-
-        Returns:
-            list of assets
-        """
-        if 'assets' in self.data:
-            return self.data['assets']
-        op = self.app.op['get_characters_character_id_assets'](
-            character_id=91316135
-        )
-        data = self.client.request(op)
-        ids = [item['type_id'] for item in data]
-        sde_data = self._do_sde_query('SELECT typeName from invTypes where typeID in ({})'.format(', '.join('?' for _ in ids)), ids)
-        item_lookups = {}
-        for pair in sde_data:
-            item_lookups[pair[0]] = pair[1]
-        for item in data:
-            item['type_name'] = item_lookups[item['type_id']]
-        self.data['assets'] = data
-        return data
