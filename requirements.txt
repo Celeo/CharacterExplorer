@@ -1,0 +1,13 @@
+certifi==2018.4.16
+chardet==3.0.4
+EsiPy==0.3.4
+futures==3.1.1
+idna==2.6
+pyaml==17.12.1
+pyswagger==0.8.37
+pytz==2018.4
+PyYAML==3.12
+requests==2.18.4
+six==1.11.0
+urllib3==1.22
+validate-email==1.3
