@@ -1,5 +1,4 @@
 import os
-import logging
 import sqlite3
 
 from esipy import App, EsiClient, EsiSecurity
@@ -13,8 +12,9 @@ class CharacterExplorer:
 
     Things this class allows access to:
         - Assets (name, quantity, location)
-        - Character (id, name, corp history, ...)
-        - Contacts ?
+        - Character id and name
+        - Corp history
+        - Contacts
         - Mail ?
         - Wallet (balance)
     """
@@ -39,21 +39,8 @@ class CharacterExplorer:
         self.refresh_token = refresh_token
         self.sde_path = sde_path or 'sqlite-latest.sqlite'
         self.data: dict = {}
-        self._setup_logging()
         self._verify_sde()
         self._setup_esi()
-
-    def _setup_logging(self) -> None:
-        """Sets up the logging controls.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        self.logging = logging.getLogger(__name__)
-        self.logging.addHandler(logging.NullHandler())
 
     def _verify_sde(self) -> None:
         """Asserts that the SDE file exists at the correct path.
@@ -65,7 +52,6 @@ class CharacterExplorer:
             None
         """
         assert os.path.exists(self.sde_path)
-        logging.debug(f'SDE at path {self.sde_path} exists')
 
     def _setup_esi(self) -> None:
         """Sets up the ESI connection library.
@@ -76,7 +62,6 @@ class CharacterExplorer:
         Returns:
             None
         """
-        logging.debug('Setting up EsiPy objects')
         headers = {'User-Agent': 'EVE Character explorer | celeodor@gmail.com'}
         self.app = App.create('https://esi.tech.ccp.is/latest/swagger.json?datasource=tranquility')
         self.security = EsiSecurity(
@@ -95,9 +80,7 @@ class CharacterExplorer:
             'expires_in': -1,
             'refresh_token': self.refresh_token
         })
-        logging.debug('Getting access token from refresh token')
         self.security.refresh()
-        logging.debug('Getting character verify information')
         self.data['verify'] = self.security.verify()
 
     def _do_sde_query(self, query, *args) -> list:
@@ -110,7 +93,6 @@ class CharacterExplorer:
         Returns:
             query data
         """
-        logging.debug(f'Running SDE query {query}')
         connection = sqlite3.connect(self.sde_path)
         cursor = connection.cursor()
         cursor.execute(query, *args)
@@ -154,14 +136,11 @@ class CharacterExplorer:
             list of assets
         """
         if 'assets' in self.data:
-            logging.info('Returning cached assets information')
             return self.data['assets']
-        logging.info('Querying ESI for assets data')
         op = self.app.op['get_characters_character_id_assets'](character_id=self.get_character_id())
         data = self.client.request(op).data
         ids = [item['type_id'] for item in data]
         sde_data = self._do_sde_query('SELECT typeID, typeName from invTypes where typeID in ({})'.format(', '.join('?' for _ in ids)), ids)
-        logging.info('Cleaning up asset information')
         item_lookups = {}
         for pair in sde_data:
             item_lookups[pair[0]] = pair[1]
@@ -183,9 +162,7 @@ class CharacterExplorer:
             list of corporation history entries
         """
         if 'corp_history' in self.data:
-            logging.info('Returning cached corporation history information')
             return self.data['corp_history']
-        logging.info('Querying ESI for corporation history data')
         op = self.app.op['get_characters_character_id_corporationhistory'](character_id=self.get_character_id())
         data = self.client.request(op).data
         ids = [item['corporation_id'] for item in data]
@@ -212,9 +189,7 @@ class CharacterExplorer:
             list of contacts
         """
         if 'contacts' in self.data:
-            logging.info('Returning cached contacts information')
             return self.data['contacts']
-        logging.info('Querying ESI for contact information')
         op = self.app.op['get_characters_character_id_contacts'](character_id=self.get_character_id())
         data = self.client.request(op).data
         ids = [item['contact_id'] for item in data]
@@ -227,6 +202,12 @@ class CharacterExplorer:
             item['contact_name'] = ids_lookup[item['contact_id']]
         self.data['contacts'] = data
         return data
+
+    def get_wallet_balance(self):  # TODO type hint
+        """TODO
+        """
+        if 'wallet' in self.data:
+            return self.data['wallet']
 
 
 all_esi_scopes: list = [
