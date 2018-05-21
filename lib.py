@@ -200,7 +200,16 @@ class CharacterExplorer:
         return data
 
     def get_contacts(self) -> list:
-        """TODO
+        """Returns the character's contacts.
+
+        The returned list is the data from the 'get_characters_character_id_contacts' ESI
+        endpoint with the contacts' names included in each entry.
+
+        Args:
+            None
+
+        Returns:
+            list of contacts
         """
         if 'contacts' in self.data:
             logging.info('Returning cached contacts information')
