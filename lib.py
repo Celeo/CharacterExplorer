@@ -5,19 +5,22 @@ import sqlite3
 from esipy import App, EsiClient, EsiSecurity
 
 
+__all__ = ['CharacterExplorer']
+
+
 class CharacterExplorer:
     """CharacterExplorer class.
 
     Things this class allows access to:
         - Assets (name, quantity, location)
-        - Character (id, name, ...)
+        - Character (id, name, corp history, ...)
         - Contacts ?
         - Mail ?
         - Wallet (balance)
     """
 
     def __init__(self, client_id: str, secret_key: str, redirect_url: str, refresh_token: str, sde_path: str = None) -> None:
-        """Init method.
+        """Init.
 
         Args:
             client_id: EVE developer app client id
@@ -193,6 +196,27 @@ class CharacterExplorer:
             ids_lookup[entry['id']] = entry['name']
         for item in data:
             item['corporation_name'] = ids_lookup[item['corporation_id']]
+        self.data['corp_history'] = data
+        return data
+
+    def get_contacts(self) -> list:
+        """TODO
+        """
+        if 'contacts' in self.data:
+            logging.info('Returning cached contacts information')
+            return self.data['contacts']
+        logging.info('Querying ESI for contact information')
+        op = self.app.op['get_characters_character_id_contacts'](character_id=self.get_character_id())  # FIXME wrong opid
+        data = self.client.request(op).data
+        ids = [item['contact_id'] for item in data]
+        op = self.app.op['post_universe_names'](ids=ids)
+        ids_data = self.client.request(op).data
+        ids_lookup = {}
+        for entry in ids_data:
+            ids_lookup[entry['id']] = entry['name']
+        for item in data:
+            item['contact_name'] = ids_lookup[item['contact_id']]
+        self.data['contacts'] = data
         return data
 
 
