@@ -19,13 +19,13 @@ class CharacterExplorer:
         - Wallet (balance)
     """
 
-    def __init__(self, client_id: str, secret_key: str, redirect_url: str, refresh_token: str, sde_path: str = None) -> None:
+    def __init__(self, client_id: str, secret_key: str, redirect_uri: str, refresh_token: str, sde_path: str = None) -> None:
         """Init.
 
         Args:
             client_id: EVE developer app client id
             secret_key: EVE developer app secret key
-            redirect_url: EVE developer app redirect URL
+            redirect_uri: EVE developer app redirect URL
             refresh_token: the character's refresh token, fetched from whichever
                            library you're using to perform SSO
             sde_path: optional, path to the SDE sqlite file
@@ -35,7 +35,7 @@ class CharacterExplorer:
         """
         self.client_id = client_id
         self.secret_key = secret_key
-        self.redirect_url = redirect_url
+        self.redirect_uri = redirect_uri
         self.refresh_token = refresh_token
         self.sde_path = sde_path or 'sqlite-latest.sqlite'
         self.data: dict = {}
@@ -81,9 +81,9 @@ class CharacterExplorer:
         self.app = App.create('https://esi.tech.ccp.is/latest/swagger.json?datasource=tranquility')
         self.security = EsiSecurity(
             app=self.app,
-            client_id='4b9a2e13b78749808d1029375fdd992c',
-            secret_key='J00TUc3wEePRjMGZoPCkp7474yQGh3TvKcTQn7gx',
-            redirect_uri='http://localhost:5000/eve/callback',
+            client_id=self.client_id,
+            secret_key=self.secret_key,
+            redirect_uri=self.redirect_uri,
             headers=headers
         )
         self.client = EsiClient(
