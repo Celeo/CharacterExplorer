@@ -8,16 +8,6 @@ __all__ = ['CharacterExplorer']
 
 
 class CharacterExplorer:
-    """CharacterExplorer class.
-
-    Things this class allows access to:
-        - Character id and name
-        - Assets (name, quantity, location)
-        - Corp history
-        - Contacts
-        - Mail ?
-        - Wallet (balance)
-    """
 
     def __init__(self, client_id: str, secret_key: str, redirect_uri: str, refresh_token: str, sde_path: str = None) -> None:
         """Init.
