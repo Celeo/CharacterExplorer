@@ -203,11 +203,24 @@ class CharacterExplorer:
         self.data['contacts'] = data
         return data
 
-    def get_wallet_balance(self):  # TODO type hint
-        """TODO
+    def get_wallet_balance(self) -> float:
+        """Returns the character's wallet balance.
+
+        The returned float is the data from the 'get_characters_character_id_wallet' ESI
+        endpoint.
+
+        Args:
+            None
+
+        Returns:
+            wallet balance
         """
         if 'wallet' in self.data:
             return self.data['wallet']
+        op = self.app.op['get_characters_character_id_wallet'](character_id=self.get_character_id())
+        data = self.client.request(op).data
+        self.data['wallet'] = data
+        return data
 
 
 all_esi_scopes: list = [
