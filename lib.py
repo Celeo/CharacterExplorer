@@ -215,7 +215,7 @@ class CharacterExplorer:
             logging.info('Returning cached contacts information')
             return self.data['contacts']
         logging.info('Querying ESI for contact information')
-        op = self.app.op['get_characters_character_id_contacts'](character_id=self.get_character_id())  # FIXME wrong opid
+        op = self.app.op['get_characters_character_id_contacts'](character_id=self.get_character_id())
         data = self.client.request(op).data
         ids = [item['contact_id'] for item in data]
         op = self.app.op['post_universe_names'](ids=ids)
