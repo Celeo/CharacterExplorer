@@ -11,8 +11,8 @@ class CharacterExplorer:
     """CharacterExplorer class.
 
     Things this class allows access to:
-        - Assets (name, quantity, location)
         - Character id and name
+        - Assets (name, quantity, location)
         - Corp history
         - Contacts
         - Mail ?
@@ -126,9 +126,6 @@ class CharacterExplorer:
     def get_assets(self) -> list:
         """Returns the character's assets.
 
-        The returned list is the data from the 'get_characters_character_id_assets' ESI
-        endpoint with the item's names included in each entry.
-
         Args:
             None
 
@@ -151,9 +148,6 @@ class CharacterExplorer:
 
     def get_corporation_history(self) -> list:
         """Returns the character's corporation history.
-
-        The returned list is the data from the 'get_characters_character_id_corporationhistory' ESI
-        endpoint with the corporations' names included in each entry.
 
         Args:
             None
@@ -179,9 +173,6 @@ class CharacterExplorer:
     def get_contacts(self) -> list:
         """Returns the character's contacts.
 
-        The returned list is the data from the 'get_characters_character_id_contacts' ESI
-        endpoint with the contacts' names included in each entry.
-
         Args:
             None
 
@@ -206,9 +197,6 @@ class CharacterExplorer:
     def get_wallet_balance(self) -> float:
         """Returns the character's wallet balance.
 
-        The returned float is the data from the 'get_characters_character_id_wallet' ESI
-        endpoint.
-
         Args:
             None
 
@@ -220,6 +208,36 @@ class CharacterExplorer:
         op = self.app.op['get_characters_character_id_wallet'](character_id=self.get_character_id())
         data = self.client.request(op).data
         self.data['wallet'] = data
+        return data
+
+    def get_wallet_journal(self) -> list:
+        """Returns the character's wallet journal.
+
+        Note: this endpoint is paginated; need to investigate how to handle having
+        mulitple pages of data.
+
+        Args:
+            None
+
+        Returns:
+            list of wallet journal entries
+        """
+        if 'wallet_journal' in self.data:
+            return self.data['wallet_journal']
+        op = self.app.op['get_characters_character_id_wallet_journal'](character_id=self.get_character_id(), page=1)
+        data = self.client.request(op).data
+        ids = []
+        for item in data:
+            ids.append(item['first_party_id'])
+            ids.append(item['second_party_id'])
+        ids_data = self.client.request(self.app.op['post_universe_names'](ids=ids)).data
+        ids_lookup = {}
+        for entry in ids_data:
+            ids_lookup[entry['id']] = entry['name']
+        for item in data:
+            item['first_party_name'] = ids_lookup[item['first_party_id']]
+            item['second_party_name'] = ids_lookup[item['second_party_id']]
+        self.dawta['wallet_journal'] = data
         return data
 
 
