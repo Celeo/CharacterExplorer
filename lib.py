@@ -142,7 +142,7 @@ class CharacterExplorer:
         """Returns the character's assets.
 
         The returned list is the data from the 'get_characters_character_id_assets' ESI
-        endpoint with the item's names included in each entry from the SDE.
+        endpoint with the item's names included in each entry.
 
         Args:
             None
@@ -154,9 +154,7 @@ class CharacterExplorer:
             logging.info('Returning cached assets information')
             return self.data['assets']
         logging.info('Querying ESI for assets data')
-        op = self.app.op['get_characters_character_id_assets'](
-            character_id=91316135
-        )
+        op = self.app.op['get_characters_character_id_assets'](character_id=self.get_character_id())
         data = self.client.request(op).data
         ids = [item['type_id'] for item in data]
         sde_data = self._do_sde_query('SELECT typeID, typeName from invTypes where typeID in ({})'.format(', '.join('?' for _ in ids)), ids)
@@ -167,6 +165,34 @@ class CharacterExplorer:
         for item in data:
             item['type_name'] = item_lookups[item['type_id']]
         self.data['assets'] = data
+        return data
+
+    def get_corporation_history(self) -> list:
+        """Returns the character's corporation history.
+
+        The returned list is the data from the 'get_characters_character_id_corporationhistory' ESI
+        endpoint with the corporations' names included in each entry.
+
+        Args:
+            None
+
+        Returns:
+            list of corporation history entries
+        """
+        if 'corp_history' in self.data:
+            logging.info('Returning cached corporation history information')
+            return self.data['corp_history']
+        logging.info('Querying ESI for corporation history data')
+        op = self.app.op['get_characters_character_id_corporationhistory'](character_id=self.get_character_id())
+        data = self.client.request(op).data
+        ids = [item['corporation_id'] for item in data]
+        op = self.app.op['post_universe_names'](ids=ids)
+        ids_data = self.client.request(op).data
+        ids_lookup = {}
+        for entry in ids_data:
+            ids_lookup[entry['id']] = entry['name']
+        for item in data:
+            item['corporation_name'] = ids_lookup[item['corporation_id']]
         return data
 
 
