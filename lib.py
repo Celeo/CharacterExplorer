@@ -164,20 +164,47 @@ class CharacterExplorer:
         data = self.client.request(op).data
         return data
 
-    def get_wallet_journal(self) -> list:
-        """Returns the character's wallet journal.
-
-        Note: this endpoint is paginated; need to investigate how to handle having
-        mulitple pages of data.
+    def _convert_swagger_dt(self, dt: 'pyswagger.primitives._time.Datetime') -> datetime.datetime:
+        """Converts a pyswagger timestamp.
 
         Args:
-            None
+            dt: pyswagger timestamp
+
+        Returns:
+            Python stdlib datetime object
+        """
+        return datetime.datetime.strptime(dt.to_json(), '%Y-%m-%dT%H:%M:%S+00:00')
+
+    def get_wallet_journal(self, back_until: datetime.datetime = None) -> list:
+        """Returns the character's wallet journal.
+
+        This method keeps calling ESI, going backuntil the passed time (default 6 months).
+
+        Args:
+            back_util: how far back to retrieve mail
 
         Returns:
             list of wallet journal entries
         """
-        op = self.app.op['get_characters_character_id_wallet_journal'](character_id=self.get_character_id(), page=1)
+        back_until = back_until or datetime.datetime.utcnow() - datetime.timedelta(days=30 * 6)
+        page = 1
+        op = self.app.op['get_characters_character_id_wallet_journal'](character_id=self.get_character_id(), page=page)
         data = self.client.request(op).data
+        while True:
+            if self._convert_swagger_dt(data[-1]['date']) < back_until:
+                break
+            page += 1
+            op = self.app.op['get_characters_character_id_wallet_journal'](character_id=self.get_character_id(), page=page)
+            new_data = self.client.request(op).data
+            if not new_data:
+                break
+            data.extend(new_data)
+        all_data = data.copy()
+        data.clear()
+        for item in all_data:
+            if self._convert_swagger_dt(item['date']) < back_until:
+                break
+            data.append(item)
         ids = []
         for item in data:
             ids.append(item['first_party_id'])
@@ -190,17 +217,6 @@ class CharacterExplorer:
             item['first_party_name'] = ids_lookup[item['first_party_id']]
             item['second_party_name'] = ids_lookup[item['second_party_id']]
         return data
-
-    def _convert_swagger_dt(self, dt: 'pyswagger.primitives._time.Datetime') -> datetime.datetime:
-        """Converts a pyswagger timestamp.
-
-        Args:
-            dt: pyswagger timestamp
-
-        Returns:
-            Python stdlib datetime object
-        """
-        return datetime.datetime.strptime(dt.to_json(), '%Y-%m-%dT%H:%M:%S+00:00')
 
     def get_mail_headers(self, back_until: datetime.datetime = None) -> list:
         """Returns the character's mail headers.
