@@ -2,7 +2,7 @@ import datetime
 import os
 import sqlite3
 
-from esipy import App, EsiClient, EsiSecurity
+import esipy
 
 
 __all__ = ['CharacterExplorer']
@@ -10,13 +10,13 @@ __all__ = ['CharacterExplorer']
 
 class CharacterExplorer:
 
-    def __init__(self, client_id: str, secret_key: str, redirect_uri: str, refresh_token: str, sde_path: str = None) -> None:
+    def __init__(self, esi_app: esipy.App, esi_security: esipy.EsiSecurity, esi_client: esipy.EsiClient, refresh_token: str, sde_path: str = None) -> None:
         """Init.
 
         Args:
-            client_id: EVE developer app client id
-            secret_key: EVE developer app secret key
-            redirect_uri: EVE developer app redirect URL
+            esi_app: EsiPy app object
+            esi_security: EsiPy security object
+            esi_client: EsiPy client object
             refresh_token: the character's refresh token, fetched from whichever
                            library you're using to perform SSO
             sde_path: optional, path to the SDE sqlite file
@@ -24,14 +24,19 @@ class CharacterExplorer:
         Returns:
             None
         """
-        self.client_id = client_id
-        self.secret_key = secret_key
-        self.redirect_uri = redirect_uri
+        self.app = esi_app
+        self.security = esi_security
+        self.client = esi_client
         self.refresh_token = refresh_token
-        self.sde_path = sde_path or 'sqlite-latest.sqlite'
-        self.char_data: dict = {}
+        self.sde_path = sde_path or 'sde.db'
         self._verify_sde()
-        self._setup_esi()
+        self.security.update_token({
+            'access_token': '',
+            'expires_in': -1,
+            'refresh_token': self.refresh_token
+        })
+        self.security.refresh()
+        self.char_data: dict = self.security.verify()
 
     def _verify_sde(self) -> None:
         """Asserts that the SDE file exists at the correct path.
@@ -43,36 +48,6 @@ class CharacterExplorer:
             None
         """
         assert os.path.exists(self.sde_path)
-
-    def _setup_esi(self) -> None:
-        """Sets up the ESI connection library.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        headers = {'User-Agent': 'EVE Character explorer | celeodor@gmail.com'}
-        self.app = App.create('https://esi.tech.ccp.is/latest/swagger.json?datasource=tranquility')
-        self.security = EsiSecurity(
-            app=self.app,
-            client_id=self.client_id,
-            secret_key=self.secret_key,
-            redirect_uri=self.redirect_uri,
-            headers=headers
-        )
-        self.client = EsiClient(
-            security=self.security,
-            headers=headers
-        )
-        self.security.update_token({
-            'access_token': '',
-            'expires_in': -1,
-            'refresh_token': self.refresh_token
-        })
-        self.security.refresh()
-        self.char_data = self.security.verify()
 
     def _do_sde_query(self, query, *args) -> list:
         """Runs a query against the SDE data.
@@ -307,15 +282,10 @@ all_esi_scopes: list = [
     'esi-assets.read_assets.v1',
     'esi-planets.manage_planets.v1',
     'esi-fleets.read_fleet.v1',
-    'esi-fleets.write_fleet.v1',
     'esi-ui.open_window.v1',
-    'esi-ui.write_waypoint.v1',
-    'esi-characters.write_contacts.v1',
     'esi-fittings.read_fittings.v1',
-    'esi-fittings.write_fittings.v1',
     'esi-markets.structure_markets.v1',
     'esi-corporations.read_structures.v1',
-    'esi-corporations.write_structures.v1',
     'esi-characters.read_loyalty.v1',
     'esi-characters.read_opportunities.v1',
     'esi-characters.read_chat_channels.v1',

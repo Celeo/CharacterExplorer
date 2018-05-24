@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="large-container">
+  <div class="row">
+    <div class="col s6">
+      <h5>Basic information</h5>
+      <table class="responsive-table highlight">
+        <tbody>
+          <tr>
+            <th>Name</th>
+            <td>{{ explorer.get_character_name() }}</td>
+          </tr>
+          <tr>
+            <th>Character ID</th>
+            <td>{{ explorer.get_character_id() }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <hr>
+      <h5>Contacts</h5>
+      <table class="responsive-table highlight">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Standing</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in explorer.get_contacts() %}
+            <tr>
+              <td>{{ entry.contact_name }}</td>
+              <td>{{ entry.standing }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col s6">
+      <h5>Corporation history</h5>
+      <table class="responsive-table highlight">
+        <thead>
+          <tr>
+            <th>Corp</th>
+            <th>Join date</th>
+          </tr>
+        </thead>
+        {% for entry in explorer.get_corporation_history() %}
+          <tr>
+            <td>{{ entry.corporation_name }}</td>
+            <td>{{ entry.start_date }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+      <br>
+      <hr>
+      <h5>Wallet journal</h5>
+      <table class="responsive-table highlight">
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Amount</th>
+            <th>Balance</th>
+            <th>Date</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in explorer.get_wallet_journal() %}
+          <tr>
+            <td>{{ entry.first_party_name }}</td>
+            <td>{{ entry.second_party_name }}</td>
+            <td>{{ entry.amount }}</td>
+            <td>{{ entry.balance }}</td>
+            <td>{{ entry.date }}</td>
+            <td>{{ entry.description }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -2,4 +2,5 @@
 env
 *.pyc
 .mypy_cache
-*.sqlite
+*.db
+config.json
