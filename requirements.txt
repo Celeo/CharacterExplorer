@@ -1,7 +1,6 @@
 certifi==2018.4.16
 chardet==3.0.4
-EsiPy==0.3.4
-futures==3.1.1
+EsiPy==0.4.0
 idna==2.6
 pyaml==17.12.1
 pyswagger==0.8.37
