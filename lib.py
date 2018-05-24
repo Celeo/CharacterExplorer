@@ -239,7 +239,7 @@ class CharacterExplorer:
             list of mail headers
         """
         back_until = back_until or datetime.datetime.utcnow() - datetime.timedelta(days=30 * 6)
-        data = []
+        data: list = []
         op = self.app.op['get_characters_character_id_mail'](character_id=self.get_character_id())
         data.extend(self.client.request(op).data)
         while True:
