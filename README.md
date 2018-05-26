@@ -1,6 +1,6 @@
 # Character Explorer
 
-Python library to get various character data from EVE's ESI.
+Python app to show various character data from EVE's ESI.
 
 ## Requirements
 
