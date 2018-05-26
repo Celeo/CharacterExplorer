@@ -5,6 +5,7 @@ EsiPy==0.4.0
 Flask==1.0.2
 Flask-Login==0.4.1
 Flask-SQLAlchemy==2.3.2
+gunicorn==19.8.1
 idna==2.6
 itsdangerous==0.24
 Jinja2==2.10
