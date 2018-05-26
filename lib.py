@@ -193,7 +193,7 @@ class CharacterExplorer:
         for pair in sde_data:
             item_lookups[pair[0]] = pair[1]
         for item in data:
-            item['type_name'] = item_lookups[item['type_id']]
+            item['type_name'] = item_lookups.get(item['type_id'], '<unknown>')
         return data
 
     def resolve_names(self, data: dict) -> None:
@@ -227,24 +227,24 @@ class CharacterExplorer:
         for entry in ids_data:
             try:
                 lookup[entry['id']] = entry['name']
-            except Exception:
+            except:
                 logging.exception('Could not resolve: ' + str(entry))
         for key, value in data.items():
             if key == 'history':
                 for item in value:
-                    item['corporation_name'] = lookup[item['corporation_id']]
+                    item['corporation_name'] = lookup.get(item['corporation_id'], '<unknown>')
             if key == 'journal':
                 for item in value:
-                    item['first_party_name'] = lookup[item['first_party_id']]
-                    item['second_party_name'] = lookup[item['second_party_id']]
+                    item['first_party_name'] = lookup.get(item['first_party_id'], '<unknown>')
+                    item['second_party_name'] = lookup.get(item['second_party_id'], '<unknown>')
             if key == 'contacts':
                 for item in value:
-                    item['contact_name'] = lookup[item['contact_id']]
+                    item['contact_name'] = lookup.get(item['contact_id'], '<unknown>')
             if key == 'mail':
                 for item in value:
-                    item['from_name'] = lookup[item['from']]
+                    item['from_name'] = lookup.get(item['from'], '<unknown>')
                     for recip in item['recipients']:
-                        recip['recipient_name'] = lookup[recip['recipient_id']]
+                        recip['recipient_name'] = lookup.get(recip['recipient_id'], '<unknown>')
 
     def compact_pagination(self, data: dict) -> None:
         """Combines paginated endpoints.
