@@ -32,3 +32,8 @@ def view():
     print(request.form['refresh_token'])
     explorer = CharacterExplorer(esi_app, esi_security, esi_client, request.form['refresh_token'])
     return render_template('view.html', explorer=explorer)
+
+
+@app.template_filter('mail_recipients')
+def filter_mail_recipients(data):
+    return ', '.join([r['recipient_name'] for r in data])

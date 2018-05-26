@@ -301,6 +301,30 @@ class CharacterExplorer:
             character_id=self.get_character_id, mail_id=mail_id)
         ).data['body']
 
+    @property
+    def get_contacts(self):
+        return self.data['contacts']
+
+    @property
+    def get_assets(self):
+        return self.data['assets']
+
+    @property
+    def get_wallet_balance(self):
+        return self.data['wallet']
+
+    @property
+    def get_wallet_journal(self):
+        return self.data['journal']
+
+    @property
+    def get_mail(self):
+        return self.data['mail']
+
+    @property
+    def get_corporation_history(self):
+        return self.data['history']
+
 
 all_esi_read_scopes: list = [
     'esi-calendar.respond_calendar_events.v1',
