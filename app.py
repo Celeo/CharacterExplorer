@@ -38,7 +38,7 @@ def view():
     try:
         explorer = CharacterExplorer(esi_app, esi_security, esi_client, token)
         return render_template('view.html', explorer=explorer)
-    except Exception as e:
+    except Exception:
         logging.exception('Could not load token data')
         flash('Could not load token data', 'warning')
         return redirect(url_for('index'))

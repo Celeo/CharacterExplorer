@@ -1,4 +1,5 @@
 import datetime
+import logging
 import sqlite3
 
 
@@ -224,7 +225,10 @@ class CharacterExplorer:
                         ids.append(recip['recipient_id'])
         ids_data = self.client.request(self.app.op['post_universe_names'](ids=set(ids))).data
         for entry in ids_data:
-            lookup[entry['id']] = entry['name']
+            try:
+                lookup[entry['id']] = entry['name']
+            except Exception:
+                logging.exception('Could not resolve: ' + str(entry))
         for key, value in data.items():
             if key == 'history':
                 for item in value:
