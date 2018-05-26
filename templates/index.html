@@ -1,19 +1,26 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<div class="container">
-  <h3>Enter data</h3>
-
+<div class="medium-container">
   <div class="row" id="app">
-    <form action="{{ url_for('view') }}" method="POST" class="col s12">
+      <form action="{{ url_for('view') }}" method="POST" class="col s12">
       <div class="row">
-        <div class="input-field col s6">
-          <input type="text" id="refresh_token" class="validate" name="refresh_token" v-model="refresh_token">
-          <label for="refresh_token">Refresh token</label>
-          <button class="btn blue waves-effect waves-light" :disabled="!refresh_token" type="submit" name="action">
-            Submit
-            <i class="material-icons right">send</i>
-          </button>
+        <div class="col s6">
+          <h4>Enter token</h4>
+          <div class="input-field">
+            <input type="text" id="refresh_token" class="validate" name="refresh_token" v-model="refresh_token">
+            <label for="refresh_token">Refresh token</label>
+            <button class="btn blue waves-effect waves-light" :disabled="!refresh_token" type="submit" name="action">
+              Submit
+              <i class="material-icons right">send</i>
+            </button>
+          </div>
+        </div>
+        <div class="col s6">
+          <h4>Generate a token</h4>
+          <a href="{{ sso_go }}">
+            <img src="https://web.ccpgamescdn.com/eveonlineassets/developers/eve-sso-login-black-large.png" alt="login_icon">
+          </a>
         </div>
       </div>
     </form>

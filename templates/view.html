@@ -1,25 +1,20 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<div class="large-container">
-  <div class="row">
-    <div class="col s6">
-      <h5>Basic information</h5>
-      <table class="responsive-table highlight">
-        <tbody>
-          <tr>
-            <th>Name</th>
-            <td>{{ explorer.get_character_name }}</td>
-          </tr>
-          <tr>
-            <th>Character ID</th>
-            <td>{{ explorer.get_character_id }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <br>
-      <hr>
-      <h5>Contacts</h5>
+<div class="medium-container">
+    <br>
+    <div class="row">
+    <div class="col s12">
+      <ul class="tabs tabs-fixed-width z-depth-1">
+        <li class="tab col"><a href="#contacts">Contacts</a></li>
+        <li class="tab col"><a href="#assets">Assets</a></li>
+        <li class="tab col"><a href="#corphistory">Corp History</a></li>
+        <li class="tab col"><a href="#walletjournal">Wallet Journal</a></li>
+        <li class="tab col"><a href="#mail">Mail</a></li>
+      </ul>
+    </div>
+    <div id="contacts" class="col s12">
+      <h4>Contacts</h4>
       <table class="responsive-table highlight">
         <thead>
           <tr>
@@ -36,9 +31,9 @@
           {% endfor %}
         </tbody>
       </table>
-      <br>
-      <hr>
-      <h5>Assets</h5>
+    </div>
+    <div id="assets" class="col s12">
+      <h4>Assets</h4>
       <table class="responsive-table highlight">
         <thead>
           <tr>
@@ -60,8 +55,8 @@
         </tbody>
       </table>
     </div>
-    <div class="col s6">
-      <h5>Corporation history</h5>
+    <div id="corphistory" class="col s12">
+      <h4>Corp History</h4>
       <table class="responsive-table highlight">
         <thead>
           <tr>
@@ -76,9 +71,9 @@
           </tr>
         {% endfor %}
       </table>
-      <br>
-      <hr>
-      <h5>Wallet journal (now: {{ explorer.get_wallet_balance }})</h5>
+    </div>
+    <div id="walletjournal" class="col s12">
+      <h4>Wallet Journal</h4>
       <table class="responsive-table highlight">
         <thead>
           <tr>
@@ -104,15 +99,11 @@
         </tbody>
       </table>
     </div>
-  </div>
-  <hr>
-  <div class="row">
-    <div class="col s12">
-      <h5>Mail</h5>
+    <div id="mail" class="col s12">
+      <h4>Mail</h4>
       <table class="responsive-table highlight">
         <thead>
           <tr>
-            <th>Labels</th>
             <th>From</th>
             <th>To</th>
             <th>Subject</th>
@@ -122,7 +113,6 @@
         <tbody>
           {% for entry in explorer.get_mail %}
             <tr>
-              <td>{{ entry.labels }}</td>
               <td>{{ entry.from_name }}</td>
               <td>{{ entry.recipients | mail_recipients }}</td>
               <td>{{ entry.subject }}</td>

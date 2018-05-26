@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container">
+  <h4>Your refresh token</h4>
+  <br>
+  <div class="row">
+    <div class="input-field col s12">
+      <textarea id="ta" class="materialize-textarea">{{ token }}</textarea>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -3,3 +3,31 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+.medium-container {
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+td {
+    padding: 5px;
+}
+
+.tabs .tab a {
+    color: #81d4fa;
+}
+
+.tabs .tab a:hover,
+.tabs .tab a.active {
+    color: #29b6f6;
+}
+
+.tabs .indicator {
+    background-color: #81d4fa;
+}
+
+.tabs .tab a:focus,
+.tabs .tab a:focus.active {
+    background-color: #e1f5fe;
+}

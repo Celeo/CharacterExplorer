@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash, redirect, url_for
 from esipy import App, EsiClient, EsiSecurity
 
-from lib import CharacterExplorer
+from lib import CharacterExplorer, all_esi_read_scopes
 
 
 app = Flask(__name__)
@@ -24,7 +24,7 @@ esi_client = EsiClient(
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', sso_go=esi_security.get_auth_uri(scopes=all_esi_read_scopes))
 
 
 @app.route('/view', methods=['POST'])
@@ -32,6 +32,20 @@ def view():
     print(request.form['refresh_token'])
     explorer = CharacterExplorer(esi_app, esi_security, esi_client, request.form['refresh_token'])
     return render_template('view.html', explorer=explorer)
+
+
+@app.route('/eve/callback')
+def eve_callback():
+    code = request.args.get('code')
+    if not code:
+        flash('Login unsuccessful', 'warning')
+        return redirect(url_for('index'))
+    try:
+        tokens = esi_security.auth(code)
+    except:
+        flash('Could not get refresh token', 'warning')
+        return redirect(url_for('index'))
+    return render_template('token_show.html', token=tokens['refresh_token'])
 
 
 @app.template_filter('mail_recipients')
