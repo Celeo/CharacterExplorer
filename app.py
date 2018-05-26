@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask, render_template, request, flash, redirect, url_for
 from esipy import App, EsiClient, EsiSecurity
 
@@ -29,11 +31,15 @@ def index():
 
 @app.route('/view', methods=['POST'])
 def view():
+    token = request.form.get('refresh_token')
+    if not token:
+        flash('No token supplied in request', 'warning')
+        return redirect(url_for('index'))
     try:
-        explorer = CharacterExplorer(esi_app, esi_security, esi_client, request.form['refresh_token'])
+        explorer = CharacterExplorer(esi_app, esi_security, esi_client, token)
         return render_template('view.html', explorer=explorer)
     except Exception as e:
-        print(e)
+        logging.exception('Could not load token data')
         flash('Could not load token data', 'warning')
         return redirect(url_for('index'))
 
