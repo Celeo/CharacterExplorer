@@ -144,6 +144,7 @@ class CharacterExplorer:
             - Wallet balance
             - Contacts
             - Wallet journal
+            - Mail (roughly 6 months back)
 
         Args:
             None
@@ -170,6 +171,7 @@ class CharacterExplorer:
                     fetched[op_key_name] = pair[1].data
         fetched['mail'] = self.fetch_mail()
         fetched['assets'] = self.resolve_type_ids(fetched['assets'])
+        self.compact_pagination(fetched)
         self.resolve_names(fetched)
         self.data.update(fetched)
 
@@ -207,15 +209,15 @@ class CharacterExplorer:
         ids = []
         lookup = {}
         for key, value in data.items():
-            if 'history' in key:
+            if key == 'history':
                 ids.extend([item['corporation_id'] for item in value])
-            if 'journal' in key:
+            if key == 'journal':
                 for item in value:
                     ids.append(item['first_party_id'])
                     ids.append(item['second_party_id'])
-            if 'contacts' in key:
+            if key == 'contacts':
                 ids.extend([item['contact_id'] for item in value])
-            if 'mail' in key:
+            if key == 'mail':
                 for item in value:
                     ids.append(item['from'])
                     for recip in item['recipients']:
@@ -224,21 +226,42 @@ class CharacterExplorer:
         for entry in ids_data:
             lookup[entry['id']] = entry['name']
         for key, value in data.items():
-            if 'history' in key:
+            if key == 'history':
                 for item in value:
                     item['corporation_name'] = lookup[item['corporation_id']]
-            if 'journal' in key:
+            if key == 'journal':
                 for item in value:
                     item['first_party_name'] = lookup[item['first_party_id']]
                     item['second_party_name'] = lookup[item['second_party_id']]
-            if 'contacts' in key:
+            if key == 'contacts':
                 for item in value:
                     item['contact_name'] = lookup[item['contact_id']]
-            if 'mail' in key:
+            if key == 'mail':
                 for item in value:
                     item['from_name'] = lookup[item['from']]
                     for recip in item['recipients']:
                         recip['recipient_name'] = lookup[recip['recipient_id']]
+
+    def compact_pagination(self, data: dict) -> None:
+        """Combines paginated endpoints.
+
+        The data is modified in-place.
+
+        Args:
+            data: ESI data
+
+        Returns:
+            None
+        """
+        for key, value in dict(data).items():
+            if '-' not in key:
+                continue
+            root = key.split('-')[0]
+            if root in data:
+                data[root].extend(value)
+            else:
+                data[root] = value
+            del data[key]
 
     def fetch_mail(self, back_until: datetime.datetime = None) -> list:
         """Gets the character's mail headers.
