@@ -223,7 +223,11 @@ class CharacterExplorer:
                     ids.append(item['from'])
                     for recip in item['recipients']:
                         ids.append(recip['recipient_id'])
-        ids_data = self.client.request(self.app.op['post_universe_names'](ids=set(ids))).data
+        ids_resp = self.client.request(self.app.op['post_universe_names'](ids=set(ids)))
+        if ids_resp.status != 200:
+            logging.exception(f'Status code {ids_resp.status} for names lookup: ' + ids_resp.raw)
+            return
+        ids_data = ids_resp.data
         for entry in ids_data:
             try:
                 lookup[entry['id']] = entry['name']
