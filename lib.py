@@ -211,7 +211,7 @@ class CharacterExplorer:
         groups = [ids[i:i + group_size] for i in range(0, len(ids), group_size)]
         for group in groups:
             try:
-                print(f'Trying to resolve {len(group)} ids')  # TODO remove
+                logging.warn(f'Trying to resolve {len(group)} ids')  # TODO remove
                 ids_resp = self.client.request(self.app.op['post_universe_names'](ids=set(ids)))
                 if ids_resp.status != 200:
                     logging.exception(f'Got response code {ids_resp.status} from name resolver')
