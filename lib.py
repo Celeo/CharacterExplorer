@@ -196,6 +196,33 @@ class CharacterExplorer:
             item['type_name'] = item_lookups.get(item['type_id'], '<unknown>')
         return data
 
+    def _ids_to_names(self, ids: list) -> dict:
+        """Makes batched calls to resolve ids to names.
+
+        Args:
+            ids: list of ids to resolve
+
+        Returns:
+            dict of id -> name for look ups
+        """
+        data: list = []
+        lookup: dict = {}
+        group_size = 1000
+        groups = [ids[i:i + group_size] for i in range(0, len(ids), group_size)]
+        for group in groups:
+            try:
+                print(f'Trying to resolve {len(group)} ids')  # TODO remove
+                ids_resp = self.client.request(self.app.op['post_universe_names'](ids=set(ids)))
+                if ids_resp.status != 200:
+                    logging.exception(f'Got response code {ids_resp.status} from name resolver')
+                    continue
+                data.extend(ids_resp.data)
+            except:
+                logging.exception('Could not resolve group of ids')
+        for entry in data:
+            lookup[entry['id']] = entry['name']
+        return lookup
+
     def resolve_names(self, data: dict) -> None:
         """Takes all fetched data and supplies name for ids.
 
@@ -208,7 +235,6 @@ class CharacterExplorer:
             None
         """
         ids = []
-        lookup = {}
         for key, value in data.items():
             if key == 'history':
                 ids.extend([item['corporation_id'] for item in value])
@@ -223,32 +249,23 @@ class CharacterExplorer:
                     ids.append(item['from'])
                     for recip in item['recipients']:
                         ids.append(recip['recipient_id'])
-        ids_resp = self.client.request(self.app.op['post_universe_names'](ids=set(ids)))
-        if ids_resp.status != 200:
-            logging.exception(f'Status code {ids_resp.status} for names lookup: ' + ids_resp.raw)
-            return
-        ids_data = ids_resp.data
-        for entry in ids_data:
-            try:
-                lookup[entry['id']] = entry['name']
-            except:
-                logging.exception('Could not resolve: ' + str(entry))
+        ids_lookup = self._ids_to_names(ids)
         for key, value in data.items():
             if key == 'history':
                 for item in value:
-                    item['corporation_name'] = lookup.get(item['corporation_id'], '<unknown>')
+                    item['corporation_name'] = ids_lookup.get(item['corporation_id'], '<unknown>')
             if key == 'journal':
                 for item in value:
-                    item['first_party_name'] = lookup.get(item['first_party_id'], '<unknown>')
-                    item['second_party_name'] = lookup.get(item['second_party_id'], '<unknown>')
+                    item['first_party_name'] = ids_lookup.get(item['first_party_id'], '<unknown>')
+                    item['second_party_name'] = ids_lookup.get(item['second_party_id'], '<unknown>')
             if key == 'contacts':
                 for item in value:
-                    item['contact_name'] = lookup.get(item['contact_id'], '<unknown>')
+                    item['contact_name'] = ids_lookup.get(item['contact_id'], '<unknown>')
             if key == 'mail':
                 for item in value:
-                    item['from_name'] = lookup.get(item['from'], '<unknown>')
+                    item['from_name'] = ids_lookup.get(item['from'], '<unknown>')
                     for recip in item['recipients']:
-                        recip['recipient_name'] = lookup.get(recip['recipient_id'], '<unknown>')
+                        recip['recipient_name'] = ids_lookup.get(recip['recipient_id'], '<unknown>')
 
     def compact_pagination(self, data: dict) -> None:
         """Combines paginated endpoints.
