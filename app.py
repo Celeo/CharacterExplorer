@@ -29,9 +29,13 @@ def index():
 
 @app.route('/view', methods=['POST'])
 def view():
-    print(request.form['refresh_token'])
-    explorer = CharacterExplorer(esi_app, esi_security, esi_client, request.form['refresh_token'])
-    return render_template('view.html', explorer=explorer)
+    try:
+        explorer = CharacterExplorer(esi_app, esi_security, esi_client, request.form['refresh_token'])
+        return render_template('view.html', explorer=explorer)
+    except Exception as e:
+        print(e)
+        flash('Could not load token data', 'warning')
+        return redirect(url_for('index'))
 
 
 @app.route('/eve/callback')
