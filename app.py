@@ -58,6 +58,12 @@ def eve_callback():
     return render_template('token_show.html', token=tokens['refresh_token'])
 
 
+@app.route('/mail/<token>/<int:mail_id>')
+def get_mail_body(token, mail_id):
+    explorer = CharacterExplorer(esi_app, esi_security, esi_client, token, load_now=False)
+    return explorer.get_mail_body(mail_id)
+
+
 @app.template_filter('mail_recipients')
 def filter_mail_recipients(data):
     return ', '.join([r['recipient_name'] for r in data])

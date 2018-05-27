@@ -1,127 +1,168 @@
 {% extends 'base.html' %}
 
 {% block body %}
-<div class="medium-container">
+<div id="app">
+  <div class="medium-container">
     <br>
     <div class="row">
-    <div class="col s12">
-      <ul class="tabs tabs-fixed-width z-depth-1">
-        <li class="tab col"><a href="#contacts">Contacts</a></li>
-        <li class="tab col"><a href="#assets">Assets</a></li>
-        <li class="tab col"><a href="#corphistory">Corp History</a></li>
-        <li class="tab col"><a href="#walletjournal">Wallet Journal</a></li>
-        <li class="tab col"><a href="#mail">Mail</a></li>
-      </ul>
-    </div>
-    <div id="contacts" class="col s12">
-      <h4>Contacts</h4>
-      <table class="responsive-table highlight">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Standing</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in explorer.get_contacts %}
+      <div class="col s12">
+        <ul class="tabs tabs-fixed-width z-depth-1">
+          <li class="tab col"><a href="#contacts">Contacts</a></li>
+          <li class="tab col"><a href="#assets">Assets</a></li>
+          <li class="tab col"><a href="#corphistory">Corp History</a></li>
+          <li class="tab col"><a href="#walletjournal">Wallet Journal</a></li>
+          <li class="tab col"><a href="#mail">Mail</a></li>
+        </ul>
+      </div>
+      <div id="contacts" class="col s12">
+        <h4>Contacts</h4>
+        <table class="responsive-table highlight">
+          <thead>
             <tr>
-              <td>{{ entry.contact_name }}</td>
-              <td>{{ entry.standing }}</td>
+              <th>Name</th>
+              <th>Standing</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in explorer.get_contacts %}
+              <tr>
+                <td>{{ entry.contact_name }}</td>
+                <td>{{ entry.standing }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div id="assets" class="col s12">
+        <h4>Assets</h4>
+        <table class="responsive-table highlight">
+          <thead>
+            <tr>
+              <th>Location id</th>
+              <th>Location type</th>
+              <th>Name</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in explorer.get_assets %}
+              <tr>
+                <td>{{ entry.location_id }}</td>
+                <td>{{ entry.location_type }}</td>
+                <td>{{ entry.type_name }}</td>
+                <td>{{ entry.quantity }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div id="corphistory" class="col s12">
+        <h4>Corp History</h4>
+        <table class="responsive-table highlight">
+          <thead>
+            <tr>
+              <th>Corp</th>
+              <th>Join date</th>
+            </tr>
+          </thead>
+          {% for entry in explorer.get_corporation_history %}
+            <tr>
+              <td>{{ entry.corporation_name }}</td>
+              <td>{{ entry.start_date }}</td>
             </tr>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div id="assets" class="col s12">
-      <h4>Assets</h4>
-      <table class="responsive-table highlight">
-        <thead>
-          <tr>
-            <th>Location id</th>
-            <th>Location type</th>
-            <th>Name</th>
-            <th>Quantity</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in explorer.get_assets %}
+        </table>
+      </div>
+      <div id="walletjournal" class="col s12">
+        <h4>Wallet Journal</h4>
+        <table class="responsive-table highlight">
+          <thead>
             <tr>
-              <td>{{ entry.location_id }}</td>
-              <td>{{ entry.location_type }}</td>
-              <td>{{ entry.type_name }}</td>
-              <td>{{ entry.quantity }}</td>
+              <th>From</th>
+              <th>To</th>
+              <th>Amount</th>
+              <th>Balance</th>
+              <th>Date</th>
+              <th>Description</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div id="corphistory" class="col s12">
-      <h4>Corp History</h4>
-      <table class="responsive-table highlight">
-        <thead>
-          <tr>
-            <th>Corp</th>
-            <th>Join date</th>
-          </tr>
-        </thead>
-        {% for entry in explorer.get_corporation_history %}
-          <tr>
-            <td>{{ entry.corporation_name }}</td>
-            <td>{{ entry.start_date }}</td>
-          </tr>
-        {% endfor %}
-      </table>
-    </div>
-    <div id="walletjournal" class="col s12">
-      <h4>Wallet Journal</h4>
-      <table class="responsive-table highlight">
-        <thead>
-          <tr>
-            <th>From</th>
-            <th>To</th>
-            <th>Amount</th>
-            <th>Balance</th>
-            <th>Date</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in explorer.get_wallet_journal %}
-          <tr>
-            <td>{{ entry.first_party_name }}</td>
-            <td>{{ entry.second_party_name }}</td>
-            <td>{{ entry.amount }}</td>
-            <td>{{ entry.balance }}</td>
-            <td>{{ entry.date }}</td>
-            <td>{{ entry.description }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div id="mail" class="col s12">
-      <h4>Mail</h4>
-      <table class="responsive-table highlight">
-        <thead>
-          <tr>
-            <th>From</th>
-            <th>To</th>
-            <th>Subject</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in explorer.get_mail %}
+          </thead>
+          <tbody>
+            {% for entry in explorer.get_wallet_journal %}
             <tr>
-              <td>{{ entry.from_name }}</td>
-              <td>{{ entry.recipients | mail_recipients }}</td>
-              <td>{{ entry.subject }}</td>
-              <td>{{ entry.timestamp }}</td>
+              <td>{{ entry.first_party_name }}</td>
+              <td>{{ entry.second_party_name }}</td>
+              <td>{{ entry.amount }}</td>
+              <td>{{ entry.balance }}</td>
+              <td>{{ entry.date }}</td>
+              <td>{{ entry.description }}</td>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div id="mail" class="col s12">
+        <h4>Mail</h4>
+        <table class="responsive-table highlight">
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>To</th>
+              <th>Subject</th>
+              <th>Date</th>
+              <th>Content</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in explorer.get_mail %}
+              <tr>
+                <td>{{ entry.from_name }}</td>
+                <td>{{ entry.recipients | mail_recipients }}</td>
+                <td>{{ entry.subject }}</td>
+                <td>{{ entry.timestamp }}</td>
+                <td>
+                  <a class="waves-effect waves-light blue btn" @click="loadMail({{ entry.mail_id }})">
+                    <i class="material-icons">email</i>
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="mailmodal" class="modal">
+    <div class="modal-content grey darken-1">
+      <p v-html="mail_body"></p>
+    </div>
+    <div class="modal-footer grey lighten-1">
+      <a href="#!" class="modal-close waves-effect waves-light btn-flat">Close</a>
     </div>
   </div>
 </div>
+
+<script>
+  new Vue({
+    el: '#app',
+    delimiters: ['[[', ']]'],
+    data: {
+      refresh_token: '{{ explorer.refresh_token }}',
+      mail_body: ''
+    },
+    methods: {
+      loadMail(id) {
+        this.mail_body = '<p class="loading">Loading ...</p>'
+        const instance = M.Modal.getInstance(document.querySelector('.modal'))
+        instance.open()
+        Vue.nextTick(() => {
+          axios.get(`/mail/${this.refresh_token}/${id}`).then(response => {
+            this.mail_body = response.data
+          }).catch(error => {
+            this.mail_body = '<p>Error: could not fetch mail body</p>'
+          })
+        })
+      }
+    }
+  })
+</script>
 {% endblock %}

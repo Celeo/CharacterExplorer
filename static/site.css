@@ -31,3 +31,8 @@ td {
 .tabs .tab a:focus.active {
     background-color: #e1f5fe;
 }
+
+.loading {
+    color: white;
+    font-size: 200%;
+}

@@ -5,7 +5,7 @@ import sqlite3
 
 class CharacterExplorer:
 
-    def __init__(self, esi_app: 'esipy.App', esi_security: 'esipy.EsiSecurity', esi_client: 'esipy.EsiClient', refresh_token: str) -> None:
+    def __init__(self, esi_app: 'esipy.App', esi_security: 'esipy.EsiSecurity', esi_client: 'esipy.EsiClient', refresh_token: str, load_now: bool = True) -> None:
         """Init.
 
         Args:
@@ -14,6 +14,7 @@ class CharacterExplorer:
             esi_client: EsiPy client object
             refresh_token: the character's refresh token, fetched from whichever
                            library you're using to perform SSO
+            load_now: if False, no ESI calls will be automatically made (default True)
 
         Returns:
             None
@@ -30,7 +31,10 @@ class CharacterExplorer:
         })
         self.security.refresh()
         self.verify()
-        self.fetch()
+        if load_now:
+            self.fetch()
+        else:
+            logging.warn('load_now is False, not calling fetch()')
 
     def verify(self) -> None:
         """Get the basic character info for the token.
