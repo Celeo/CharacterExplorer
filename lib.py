@@ -207,12 +207,13 @@ class CharacterExplorer:
         """
         data: list = []
         lookup: dict = {}
+        ids = list(set(ids))
         group_size = 1000
         groups = [ids[i:i + group_size] for i in range(0, len(ids), group_size)]
         for group in groups:
             try:
-                logging.warn(f'Trying to resolve {len(group)} ids')  # TODO remove
-                ids_resp = self.client.request(self.app.op['post_universe_names'](ids=set(ids)))
+                logging.warn(f'Trying to resolve {len(group)} ids')
+                ids_resp = self.client.request(self.app.op['post_universe_names'](ids=group))
                 if ids_resp.status != 200:
                     logging.exception(f'Got response code {ids_resp.status} from name resolver')
                     continue
@@ -222,6 +223,38 @@ class CharacterExplorer:
         for entry in data:
             lookup[entry['id']] = entry['name']
         return lookup
+
+    def _filter_ids_down(self, ids: list) -> (list, dict):
+        """Filters ids on the factions and mailing list ids.
+
+        ESI is bad, so this method is required.
+
+        The universe/names endpoint doesn't handle faction ids, so this method
+        gets the list of factions in the game (from another endpoint) and pops
+        the ids matching factions out of the passed list. The same is true
+        for mailing list ids.
+
+        Args:
+            list of ids that will be resolved to names
+
+        Returns:
+            the list of ids, trimmed, and a map of the lookups so far
+        """
+        factions = self.client.request(self.app.op['get_universe_factions']()).data
+        mailing_lists = self.client.request(self.app.op['get_characters_character_id_mail_lists'](character_id=self.get_character_id)).data
+        lookup = {}
+        for i in list(ids):
+            for faction in factions:
+                if i == faction['faction_id']:
+                    lookup[i] = faction['name'] + ' (faction)'
+                    ids.remove(i)
+                    break
+            for entry in mailing_lists:
+                if i == entry['mailing_list_id']:
+                    lookup[i] = entry['name'] + ' (mailing list)'
+                    ids.remove(i)
+                    break
+        return ids, lookup
 
     def resolve_names(self, data: dict) -> None:
         """Takes all fetched data and supplies name for ids.
@@ -237,27 +270,31 @@ class CharacterExplorer:
         ids = []
         for key, value in data.items():
             if key == 'history':
-                ids.extend([item['corporation_id'] for item in value])
+                for item in value:
+                    ids.append(item['corporation_id'])
             if key == 'journal':
                 for item in value:
-                    ids.append(item['first_party_id'])
-                    ids.append(item['second_party_id'])
+                    if 'first_party_id' in item and 'second_party_id' in item:
+                        ids.append(item['first_party_id'])
+                        ids.append(item['second_party_id'])
             if key == 'contacts':
-                ids.extend([item['contact_id'] for item in value])
+                for item in value:
+                    ids.append(item['contact_id'])
             if key == 'mail':
                 for item in value:
                     ids.append(item['from'])
                     for recip in item['recipients']:
                         ids.append(recip['recipient_id'])
-        ids_lookup = self._ids_to_names(ids)
+        ids, ids_lookup = self._filter_ids_down(ids)
+        ids_lookup.update(self._ids_to_names(ids))
         for key, value in data.items():
             if key == 'history':
                 for item in value:
                     item['corporation_name'] = ids_lookup.get(item['corporation_id'], '<unknown>')
             if key == 'journal':
                 for item in value:
-                    item['first_party_name'] = ids_lookup.get(item['first_party_id'], '<unknown>')
-                    item['second_party_name'] = ids_lookup.get(item['second_party_id'], '<unknown>')
+                    item['first_party_name'] = ids_lookup.get(item.get('first_party_id'), '<unknown>')
+                    item['second_party_name'] = ids_lookup.get(item.get('second_party_id'), '<unknown>')
             if key == 'contacts':
                 for item in value:
                     item['contact_name'] = ids_lookup.get(item['contact_id'], '<unknown>')
@@ -327,15 +364,15 @@ class CharacterExplorer:
         ).data['body']
 
     @property
-    def get_contacts(self):
+    def get_contacts(self) -> list:
         return self.data['contacts']
 
     @property
-    def get_assets(self):
+    def get_assets(self) -> list:
         return self.data['assets']
 
     @property
-    def get_wallet_balance(self):
+    def get_wallet_balance(self) -> int:
         return self.data['wallet']
 
     @property
@@ -343,11 +380,11 @@ class CharacterExplorer:
         return self.data['journal']
 
     @property
-    def get_mail(self):
+    def get_mail(self) -> list:
         return self.data['mail']
 
     @property
-    def get_corporation_history(self):
+    def get_corporation_history(self) -> list:
         return self.data['history']
 
 

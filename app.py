@@ -36,11 +36,10 @@ def view():
         flash('No token supplied in request', 'warning')
         return redirect(url_for('index'))
     try:
-        logging.warn('>>> ' + token)  # TODO remove
         explorer = CharacterExplorer(esi_app, esi_security, esi_client, token)
         return render_template('view.html', explorer=explorer)
-    except:
-        logging.exception('Could not load token data')
+    except Exception as e:
+        logging.exception('Could not load token data: ' + str(e))
         flash('Could not load token data', 'warning')
         return redirect(url_for('index'))
 
