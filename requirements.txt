@@ -15,7 +15,7 @@ prawcore==0.14.0
 pyaml==17.12.1
 pyswagger==0.8.37
 pytz==2018.4
-PyYAML==3.12
+PyYAML==5.1
 requests==2.18.4
 six==1.11.0
 SQLAlchemy==1.2.7
